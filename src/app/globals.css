@@ -1,0 +1,4 @@
+/* Global styles: Tailwind layers and any app-wide CSS variables. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
