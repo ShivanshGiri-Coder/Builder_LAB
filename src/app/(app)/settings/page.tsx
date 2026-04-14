@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, type KeyboardEvent, type ChangeEvent } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 function ProfileSetupForm() {
   const [fullName, setFullName] = useState("")
@@ -12,7 +13,10 @@ function ProfileSetupForm() {
   const [twitterUrl, setTwitterUrl] = useState("")
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [success, setSuccess] = useState("")
+  const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const supabase = createClient()
 
   const maxBioLength = 150
   const remainingChars = maxBioLength - bio.length
@@ -52,9 +56,49 @@ function ProfileSetupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
+    setSuccess("")
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
+
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        setError("You must be logged in to save your profile.")
+        return
+      }
+
+      // Prepare profile data
+      const profileData = {
+        id: user.id,
+        user_id: user.id,
+        full_name: fullName,
+        bio: bio,
+        skills: skills,
+        github_url: githubUrl,
+        linkedin_url: linkedinUrl,
+        twitter_url: twitterUrl,
+        updated_at: new Date().toISOString()
+      }
+
+      // Save to Supabase
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .upsert(profileData, {
+          onConflict: 'user_id'
+        })
+
+      if (insertError) {
+        setError(insertError.message)
+      } else {
+        setSuccess("Profile saved successfully!")
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -88,6 +132,20 @@ function ProfileSetupForm() {
 
       {/* Form Card */}
       <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 md:p-8 shadow-xl shadow-purple-500/5 backdrop-blur-sm">
+        {/* Success Message */}
+        {success && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6">
+            <p className="text-green-400 text-sm">{success}</p>
+          </div>
+        )}
+        
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Photo */}
           <div className="flex flex-col items-center gap-4">
