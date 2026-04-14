@@ -1,13 +1,20 @@
-// Sign-up placeholder page.
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+
 export default function SignupPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace("/login")
+  }, [router])
+
   return (
-    <main className="min-h-screen bg-gray-950 text-white px-4 py-20">
-      <div className="max-w-2xl mx-auto text-center">
-        <h1 className="text-3xl font-bold mb-4">Create your account</h1>
-        <p className="text-gray-400">
-          Sign-up flow is coming soon. Builder LAB will let you create and publish
-          your portfolio in minutes.
-        </p>
+    <main className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-400">Redirecting to login...</p>
       </div>
     </main>
   )
