@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, type ChangeEvent } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 function AddProjectForm() {
   const [projectName, setProjectName] = useState("")
@@ -11,7 +12,12 @@ function AddProjectForm() {
   const [demoLink, setDemoLink] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [success, setSuccess] = useState("")
+  const [error, setError] = useState("")
+  const [generatedCaseStudy, setGeneratedCaseStudy] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const supabase = createClient()
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -26,9 +32,80 @@ function AddProjectForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
+    setError("")
+    setSuccess("")
+    setGeneratedCaseStudy(null)
+    setIsGenerating(true)
+
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        setError("You must be logged in to save a project.")
+        setIsGenerating(false)
+        return
+      }
+
+      // Prepare project data
+      const projectData = {
+        id: user.id, // Set id to user ID
+        user_id: user.id, // Also set user_id
+        project_name: projectName,
+        problem_solved: problemSolved,
+        what_built: whatBuilt,
+        tech_used: techUsed,
+        github_link: githubLink,
+        demo_link: demoLink,
+        created_at: new Date().toISOString()
+      }
+
+      // Save project to Supabase
+      const { error: insertError } = await supabase
+        .from('projects')
+        .upsert(projectData, {
+          onConflict: 'user_id'
+        })
+
+      if (insertError) {
+        setError(insertError.message)
+        setIsGenerating(false)
+        return
+      }
+
+      // Generate AI case study
+      const response = await fetch('/api/generate-case-study', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectName,
+          description: whatBuilt,
+          techStack: techUsed,
+          problemSolved
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate case study')
+      }
+
+      const { caseStudy } = await response.json()
+      setGeneratedCaseStudy(caseStudy)
+      setSuccess("Project saved and case study generated!")
+
+      // Update project with AI case study
+      await supabase
+        .from('projects')
+        .update({ ai_case_study: caseStudy })
+        .eq('user_id', user.id)
+
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   return (
@@ -62,6 +139,20 @@ function AddProjectForm() {
 
       {/* Form Card */}
       <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 md:p-8 shadow-xl shadow-purple-500/5 backdrop-blur-sm">
+        {/* Success Message */}
+        {success && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6">
+            <p className="text-green-400 text-sm">{success}</p>
+          </div>
+        )}
+        
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Project Image Upload */}
           <div className="space-y-2">
@@ -103,7 +194,7 @@ function AddProjectForm() {
                   >
                     <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                     <circle cx="9" cy="9" r="2" />
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                   </svg>
                   <span className="text-sm">Click to upload project image</span>
                 </div>
@@ -228,10 +319,10 @@ function AddProjectForm() {
           {/* Generate AI Case Study Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isGenerating}
             className="w-full h-14 bg-purple-600 hover:bg-purple-500 disabled:opacity-70 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 flex items-center justify-center gap-2 mt-8 text-lg"
           >
-            {isLoading ? (
+            {isGenerating ? (
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle
@@ -258,6 +349,16 @@ function AddProjectForm() {
             )}
           </button>
         </form>
+        
+        {/* Generated Case Study Display */}
+        {generatedCaseStudy && (
+          <div className="mt-8 p-6 bg-gray-800/50 border border-gray-700 rounded-xl">
+            <h3 className="text-white text-lg font-semibold mb-4">Generated Case Study</h3>
+            <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+              {generatedCaseStudy}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
