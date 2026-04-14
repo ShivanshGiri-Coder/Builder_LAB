@@ -1,7 +1,15 @@
 // Gemini AI client - call from API routes only, never from browser
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// Check if API key is available
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+if (!geminiApiKey) {
+  console.error('GEMINI_API_KEY environment variable is not set');
+  throw new Error('GEMINI_API_KEY environment variable is not configured');
+}
+
+const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 export async function generateCaseStudy(
   projectName: string,
@@ -9,9 +17,18 @@ export async function generateCaseStudy(
   techStack: string,
   problemSolved: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  console.log('=== Gemini AI Client Called ===');
+  console.log('Parameters:', {
+    projectName: projectName.substring(0, 50) + '...',
+    description: description.substring(0, 50) + '...',
+    techStack: techStack.substring(0, 50) + '...',
+    problemSolved: problemSolved.substring(0, 50) + '...'
+  });
 
-  const prompt = `You are a professional case study writer for student portfolios.
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const prompt = `You are a professional case study writer for student portfolios.
   
 Write a 3-paragraph case study for this project:
 - Project Name: ${projectName}
@@ -27,6 +44,18 @@ Cover:
 Write for a college admissions officer or startup recruiter.
 Keep it under 150 words. Be specific, not generic.`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+    console.log('Sending prompt to Gemini AI...');
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+    console.log('Gemini AI response received, length:', response.length);
+    console.log('=== Gemini AI Client Success ===');
+    return response;
+  } catch (error) {
+    console.error('=== Gemini AI Client Error ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.log('=== End Gemini Error ===');
+    throw error;
+  }
 }
