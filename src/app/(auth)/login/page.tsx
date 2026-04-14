@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 type AuthMode = "login" | "signup"
 
@@ -9,12 +11,59 @@ function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [supabaseError, setSupabaseError] = useState("")
+  const router = useRouter()
+
+  let supabase: ReturnType<typeof createClient> | undefined
+  try {
+    supabase = createClient()
+  } catch (error) {
+    setSupabaseError("Supabase configuration error. Please check your environment variables.")
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
+    
+    if (!supabase) {
+      setError("Supabase client not initialized. Please check your environment variables.")
+      return
+    }
+    
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
+
+    try {
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        
+        if (error) {
+          setError(error.message === "Invalid login credentials" 
+            ? "Invalid email or password" 
+            : error.message)
+        } else {
+          router.push("/dashboard")
+        }
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
+        
+        if (error) {
+          setError(error.message)
+        } else {
+          router.push("/settings")
+        }
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -41,6 +90,20 @@ function AuthForm() {
           </button>
         </div>
 
+        {supabaseError && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+            <p className="text-yellow-400 text-sm font-medium">Configuration Error</p>
+            <p className="text-yellow-300 text-xs mt-1">{supabaseError}</p>
+            <p className="text-yellow-300 text-xs mt-2">Please copy .env.local.example to .env.local and add your Supabase URL and anon key.</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <label htmlFor="email" className="text-white text-sm font-medium block">Email</label>
@@ -58,7 +121,7 @@ function AuthForm() {
             </div>
           )}
 
-          <button type="submit" disabled={isLoading} className="w-full h-12 bg-purple-600 hover:bg-purple-500 disabled:opacity-70 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 flex items-center justify-center">
+          <button type="submit" disabled={isLoading || !supabase} className="w-full h-12 bg-purple-600 hover:bg-purple-500 disabled:opacity-70 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 flex items-center justify-center">
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
