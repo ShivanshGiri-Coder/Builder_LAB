@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
+import TodoList from "@/components/TodoList"
 
 interface Profile {
   full_name: string | null
@@ -270,6 +271,11 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Todo List Section */}
+          <div className="mt-8">
+            <TodoList />
           </div>
         </div>
       </div>
