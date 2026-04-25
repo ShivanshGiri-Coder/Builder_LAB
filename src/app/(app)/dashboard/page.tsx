@@ -179,7 +179,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
             <Link
               href="/builder"
               className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl p-6 transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 flex items-center justify-center gap-3"
@@ -215,6 +215,15 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>Export PDF</span>
+            </Link>
+            <Link
+              href="/export/website"
+              className="bg-gradient-to-r from-cyan-600/80 to-blue-600/80 hover:from-cyan-500/80 hover:to-blue-500/80 text-white font-semibold rounded-xl p-6 transition-all duration-200 border border-cyan-500/30 hover:border-cyan-500/50 flex items-center justify-center gap-3"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+              </svg>
+              <span>Export Website</span>
             </Link>
             <Link
               href="/settings"
