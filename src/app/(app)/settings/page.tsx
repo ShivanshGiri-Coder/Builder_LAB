@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 
 function ProfileSetupForm() {
   const [fullName, setFullName] = useState("")
+  const [username, setUsername] = useState("")
   const [bio, setBio] = useState("")
   const [skills, setSkills] = useState<string[]>([])
   const [skillInput, setSkillInput] = useState("")
@@ -74,6 +75,7 @@ function ProfileSetupForm() {
         id: user.id,
         user_id: user.id,
         full_name: fullName,
+        username: username,
         bio: bio,
         skills: skills,
         github_url: githubUrl,
@@ -204,6 +206,29 @@ function ProfileSetupForm() {
               onChange={(e) => setFullName(e.target.value)}
               className="w-full h-12 px-4 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
             />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-white text-sm font-medium block">
+              Username (Portfolio URL)
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                builderlab.com/p/
+              </span>
+              <input
+                id="username"
+                type="text"
+                placeholder="johndoe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                className="w-full h-12 pl-32 pr-4 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Your portfolio will be available at: builderlab.com/p/{username || 'your-username'}
+            </p>
           </div>
 
           {/* Bio */}
