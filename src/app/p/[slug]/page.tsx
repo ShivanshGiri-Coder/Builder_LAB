@@ -1,88 +1,48 @@
 import type { Metadata } from "next"
 
-// Sample data for realistic portfolio
-const sampleUserData = {
-  name: "Alex Chen",
-  username: "alexchen",
-  bio: "17-year-old full-stack developer passionate about building tools that make developers' lives easier. Currently exploring AI/ML and open source.",
-  photo: null as string | null,
-  socials: {
-    github: "https://github.com/alexchen",
-    linkedin: "https://linkedin.com/in/alexchen",
-    twitter: "https://twitter.com/alexchen",
-  },
-  skills: [
-    "React",
-    "Next.js",
-    "TypeScript",
-    "Node.js",
-    "Python",
-    "Tailwind CSS",
-    "PostgreSQL",
-    "Git",
-    "Figma",
-    "AWS",
-  ],
-  projects: [
-    {
-      id: 1,
-      name: "DevFlow",
-      image: null as string | null,
-      techStack: ["Next.js", "TypeScript", "Prisma", "PostgreSQL"],
-      caseStudy:
-        "DevFlow solves the problem of scattered developer workflows by centralizing task management, code snippets, and documentation in one place. I built a full-stack application with real-time collaboration features, custom markdown editor, and GitHub integration. The app uses Next.js for the frontend with server-side rendering, Prisma as the ORM, and PostgreSQL for data persistence.",
-      github: "https://github.com/alexchen/devflow",
-      demo: "https://devflow.vercel.app",
-    },
-    {
-      id: 2,
-      name: "CodeSnap",
-      image: null as string | null,
-      techStack: ["React", "Node.js", "Express", "MongoDB"],
-      caseStudy:
-        "Developers often struggle to share beautiful code screenshots for social media and documentation. CodeSnap is a web app that transforms code into stunning, customizable images with syntax highlighting, gradients, and export options. Built with React on the frontend and a Node.js backend for image processing and storage.",
-      github: "https://github.com/alexchen/codesnap",
-      demo: "https://codesnap.dev",
-    },
-    {
-      id: 3,
-      name: "GitStats",
-      image: null as string | null,
-      techStack: ["Python", "FastAPI", "React", "Chart.js"],
-      caseStudy:
-        "Understanding your GitHub activity patterns can help improve productivity. GitStats analyzes your GitHub contributions and generates detailed insights about coding habits, most productive hours, and language preferences. The Python backend processes GitHub API data while the React frontend visualizes statistics with interactive charts.",
-      github: "https://github.com/alexchen/gitstats",
-      demo: null,
-    },
-  ],
+interface Profile {
+  full_name: string | null
+  username: string | null
+  bio: string | null
+  photo: string | null
+  github_url: string | null
+  linkedin_url: string | null
+  twitter_url: string | null
+  skills: string[] | null
 }
 
-type PortfolioData = typeof sampleUserData
+interface Project {
+  id: number
+  project_name: string
+  problem_solved: string | null
+  what_built: string | null
+  tech_used: string | null
+  github_link: string | null
+  demo_link: string | null
+  ai_case_study: string | null
+  created_at: string
+}
 
-function getPortfolioData(slug: string): PortfolioData {
-  // If slug matches sample user, return full sample data
-  if (slug === "alexchen") {
-    return sampleUserData
-  }
+interface PortfolioData {
+  profile: Profile
+  projects: Project[]
+}
 
-  // For unknown slugs, derive data from the slug
-  const formattedName = slug
-    .split(/[-_]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
+async function getPortfolioData(slug: string): Promise<PortfolioData | null> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/portfolio/${slug}`, {
+      cache: 'no-store', // Always get fresh data
+    })
 
-  return {
-    name: formattedName,
-    username: slug,
-    bio: "A passionate developer building cool things on the internet. Always learning, always coding.",
-    photo: null,
-    socials: {
-      github: `https://github.com/${slug}`,
-      linkedin: `https://linkedin.com/in/${slug}`,
-      twitter: `https://twitter.com/${slug}`,
-    },
-    skills: ["JavaScript", "React", "Node.js", "CSS", "Git"],
-    projects: [],
+    if (!response.ok) {
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Failed to fetch portfolio:', error)
+    return null
   }
 }
 
@@ -92,15 +52,32 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const data = getPortfolioData(slug)
+  const data = await getPortfolioData(slug)
+  
+  if (!data) {
+    return {
+      title: 'Portfolio Not Found | Builder LAB',
+      description: 'This portfolio could not be found.',
+    }
+  }
+  
   return {
-    title: `${data.name} | Builder LAB`,
-    description: data.bio,
+    title: `${data.profile.full_name || data.profile.username} | Builder LAB`,
+    description: data.profile.bio || 'Check out my portfolio on Builder LAB',
   }
 }
 
 function HeroSection({ data }: { data: PortfolioData }) {
-  const { name, username, bio, photo, socials } = data
+  const profile = data.profile
+  const name = profile.full_name || profile.username || 'Unknown'
+  const username = profile.username || 'unknown'
+  const bio = profile.bio || 'No bio available'
+  const photo = profile.photo
+  const socials = {
+    github: profile.github_url,
+    linkedin: profile.linkedin_url,
+    twitter: profile.twitter_url
+  }
 
   return (
     <section className="pt-24 pb-16 px-4">
@@ -220,75 +197,69 @@ function SkillsSection({ skills }: { skills: string[] }) {
 function ProjectCard({
   project,
 }: {
-  project: PortfolioData["projects"][0]
+  project: Project
 }) {
   return (
     <article className="group bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-2xl overflow-hidden hover:border-purple-500/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
       {/* Project Image */}
       <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
-        {project.image ? (
-          <img
-            src={project.image}
-            alt={`Screenshot of ${project.name}`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-gray-900 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-16 h-16 text-purple-500/30 group-hover:text-purple-500/50 transition-colors duration-300"
-              aria-hidden="true"
-            >
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            </svg>
-          </div>
-        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-gray-900 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-16 h-16 text-purple-500/30 group-hover:text-purple-500/50 transition-colors duration-300"
+            aria-hidden="true"
+          >
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+          </svg>
+        </div>
       </div>
 
       {/* Project Content */}
       <div className="p-6">
         {/* Project Name */}
-        <h3 className="text-xl font-bold text-white mb-3">{project.name}</h3>
+        <h3 className="text-xl font-bold text-white mb-3">{project.project_name}</h3>
 
         {/* Tech Stack Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {project.techStack.map((tech) => (
+          {project.tech_used ? project.tech_used.split(',').map((tech: string) => (
             <span
-              key={tech}
+              key={tech.trim()}
               className="px-2.5 py-1 bg-gray-800/80 text-gray-400 text-xs font-medium rounded-md"
             >
-              {tech}
+              {tech.trim()}
             </span>
-          ))}
+          )) : null}
         </div>
 
         {/* AI Case Study */}
         <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-4">
-          {project.caseStudy}
+          {project.ai_case_study || 'No case study available.'}
         </p>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <a
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 h-10 flex items-center justify-center gap-2 bg-gray-800/80 hover:bg-gray-700/80 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-            </svg>
-            GitHub
-          </a>
-          {project.demo ? (
+          {project.github_link && (
             <a
-              href={project.demo}
+              href={project.github_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 h-10 flex items-center justify-center gap-2 bg-gray-800/80 hover:bg-gray-700/80 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+              </svg>
+              GitHub
+            </a>
+          )}
+          {project.demo_link ? (
+            <a
+              href={project.demo_link}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 h-10 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors duration-200"
@@ -431,7 +402,21 @@ export default async function PortfolioPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const data = getPortfolioData(slug)
+  const data = await getPortfolioData(slug)
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-4">Portfolio Not Found</h1>
+          <p className="text-gray-400 mb-8">This portfolio could not be found.</p>
+          <a href="/" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors">
+            Go Home
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -482,7 +467,7 @@ export default async function PortfolioPage({
         {/* Content */}
         <div className="relative z-10">
           <HeroSection data={data} />
-          <SkillsSection skills={data.skills} />
+          <SkillsSection skills={data.profile.skills || []} />
           <ProjectsSection projects={data.projects} />
           <Footer />
         </div>
