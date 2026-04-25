@@ -257,12 +257,21 @@ export default function DashboardPage() {
                 <span className="text-gray-400">Interview Prep (Coming Soon)</span>
               </div>
               
-              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 flex items-center justify-center gap-3 opacity-60">
-                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-gray-400">Portfolio Optimizer (Coming Soon)</span>
-              </div>
+              <Link
+              href="/themes/editor"
+              className="bg-gradient-to-r from-pink-600/80 to-purple-600/80 hover:from-pink-500/80 hover:to-purple-500/80 text-white font-semibold rounded-xl p-6 transition-all duration-200 border border-pink-500/30 hover:border-pink-500/50 flex items-center justify-center gap-3"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+              <span>Theme Editor</span>
+            </Link>
+            <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 flex items-center justify-center gap-3 opacity-60">
+              <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="text-gray-400">Portfolio Optimizer (Coming Soon)</span>
+            </div>
             </div>
           </div>
 
