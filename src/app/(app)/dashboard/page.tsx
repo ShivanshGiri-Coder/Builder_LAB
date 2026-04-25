@@ -218,6 +218,36 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          {/* AI Tools Section */}
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6">AI Tools</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link
+                href="/ai-tools/resume-builder"
+                className="bg-gradient-to-r from-indigo-600/80 to-purple-600/80 hover:from-indigo-500/80 hover:to-purple-500/80 text-white font-semibold rounded-xl p-6 transition-all duration-200 border border-indigo-500/30 hover:border-indigo-500/50 flex items-center justify-center gap-3"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>AI Resume Builder</span>
+              </Link>
+              
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 flex items-center justify-center gap-3 opacity-60">
+                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                <span className="text-gray-400">Interview Prep (Coming Soon)</span>
+              </div>
+              
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 flex items-center justify-center gap-3 opacity-60">
+                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-gray-400">Portfolio Optimizer (Coming Soon)</span>
+              </div>
+            </div>
+          </div>
+
           {/* Projects Section */}
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Your Projects</h2>
