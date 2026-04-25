@@ -179,7 +179,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
             <Link
               href="/builder"
               className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl p-6 transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 flex items-center justify-center gap-3"
@@ -188,6 +188,15 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span>Add New Project</span>
+            </Link>
+            <Link
+              href="/templates"
+              className="bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-500/80 hover:to-pink-500/80 text-white font-semibold rounded-xl p-6 transition-all duration-200 border border-purple-500/30 hover:border-purple-500/50 flex items-center justify-center gap-3"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+              <span>Choose Template</span>
             </Link>
             <Link
               href="/settings"
