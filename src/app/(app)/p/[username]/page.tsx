@@ -105,21 +105,12 @@ export async function generateMetadata({
       type: 'profile',
       url: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/p/${username}`,
       siteName: 'Builder LAB',
-      images: [
-        {
-          url: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/api/og/${username}`,
-          width: 1200,
-          height: 630,
-          alt: `${profile.full_name || profile.username}'s Portfolio`,
-        },
-      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
       creator: profile.twitter_url?.split('twitter.com/')[1] || '@builderlab',
-      images: [`${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/api/og/${username}`],
     },
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/p/${username}`,
