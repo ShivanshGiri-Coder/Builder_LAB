@@ -264,7 +264,7 @@ Make sure all HTML is valid, CSS is optimized, and the website works perfectly o
     } catch (parseError) {
       console.error('AI response parsing error:', parseError)
       // Fallback to basic website generation
-      websiteFiles = generateFallbackWebsiteFiles(profile, projects, template, seoSettings, customCSS, customJS)
+      websiteFiles = generateFallbackWebsiteFiles(profile, projects || [], template, seoSettings, customCSS, customJS)
       metadata = {
         title: `${profile.full_name || 'Portfolio'} - Professional Portfolio`,
         description: profile.bio || 'Professional portfolio showcasing projects and skills',

@@ -195,7 +195,7 @@ CATEGORY: ${template.category}
 REQUIRED SECTIONS: ${template.sections?.join(', ')}
 
 Please generate a complete resume with the following sections:
-${template.sections?.map(section => `- ${section}`).join('\n')}
+${template.sections?.map((section: string) => `- ${section}`).join('\n')}
 
 For each section, provide:
 1. Professional content that highlights achievements and impact

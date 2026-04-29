@@ -49,8 +49,7 @@ function AddProjectForm() {
 
       // Prepare project data
       const projectData = {
-        id: user.id, // Set id to user ID
-        user_id: user.id, // Also set user_id
+        user_id: user.id,
         project_name: projectName,
         problem_solved: problemSolved,
         what_built: whatBuilt,
@@ -61,11 +60,11 @@ function AddProjectForm() {
       }
 
       // Save project to Supabase
-      const { error: insertError } = await supabase
+      const { data: savedProject, error: insertError } = await supabase
         .from('projects')
-        .upsert(projectData, {
-          onConflict: 'user_id'
-        })
+        .insert(projectData)
+        .select()
+        .single()
 
       if (insertError) {
         setError(insertError.message)
@@ -74,32 +73,52 @@ function AddProjectForm() {
       }
 
       // Generate AI case study
-      const response = await fetch('/api/generate-case-study', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectName,
-          description: whatBuilt,
-          techStack: techUsed,
-          problemSolved
+      let caseStudy = null
+      try {
+        const response = await fetch('/api/generate-case-study', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectName,
+            description: whatBuilt,
+            techStack: techUsed,
+            problemSolved
+          })
         })
-      })
 
-      if (!response.ok) {
-        throw new Error('Failed to generate case study')
+        if (!response.ok) {
+          throw new Error('Failed to generate case study')
+        }
+
+        const result = await response.json()
+        caseStudy = result.caseStudy
+        setGeneratedCaseStudy(caseStudy)
+        setSuccess("Project saved and case study generated!")
+      } catch (aiError) {
+        console.error('AI generation failed:', aiError)
+        // Fallback case study if AI fails
+        caseStudy = `**${projectName}**
+
+**Problem Solved:** ${problemSolved}
+
+**Solution:** ${whatBuilt}
+
+**Technologies Used:** ${techUsed}
+
+This project demonstrates strong problem-solving skills and technical expertise in building practical solutions.`
+        setGeneratedCaseStudy(caseStudy)
+        setSuccess("Project saved! (AI generation failed, used fallback)")
       }
 
-      const { caseStudy } = await response.json()
-      setGeneratedCaseStudy(caseStudy)
-      setSuccess("Project saved and case study generated!")
-
       // Update project with AI case study
-      await supabase
-        .from('projects')
-        .update({ ai_case_study: caseStudy })
-        .eq('user_id', user.id)
+      if (savedProject && caseStudy) {
+        await supabase
+          .from('projects')
+          .update({ ai_case_study: caseStudy })
+          .eq('id', savedProject.id)
+      }
 
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")

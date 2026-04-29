@@ -70,6 +70,32 @@ function ProfileSetupForm() {
         return
       }
 
+      // Validate username if provided
+      if (username) {
+        // Check if username is already taken by another user
+        const { data: existingProfile, error: usernameError } = await supabase
+          .from('profiles')
+          .select('username, user_id')
+          .eq('username', username)
+          .single()
+
+        if (usernameError && usernameError.code !== 'PGRST116') {
+          setError("Error checking username availability.")
+          return
+        }
+
+        // If username exists and belongs to a different user
+        if (existingProfile && existingProfile.user_id !== user.id) {
+          setError("Username is already taken. Please choose a different one.")
+          return
+        }
+
+        // If username is same as current user's existing username, allow update
+        if (existingProfile && existingProfile.user_id === user.id) {
+          // User is updating their profile with same username, proceed
+        }
+      }
+
       // Prepare profile data
       const profileData = {
         id: user.id,
@@ -88,13 +114,24 @@ function ProfileSetupForm() {
       const { error: insertError } = await supabase
         .from('profiles')
         .upsert(profileData, {
-          onConflict: 'user_id'
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         })
 
       if (insertError) {
-        setError(insertError.message)
+        // Handle specific duplicate username error
+        if (insertError.code === '23505' && insertError.message.includes('profiles_username_key')) {
+          setError("Username is already taken. Please choose a different one.")
+        } else {
+          setError(insertError.message)
+        }
       } else {
         setSuccess("Profile saved successfully!")
+        
+        // Redirect to dashboard after successful save
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1500)
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")

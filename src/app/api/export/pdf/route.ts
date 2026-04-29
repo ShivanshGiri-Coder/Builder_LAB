@@ -232,7 +232,7 @@ Return the response as JSON with this structure:
     } catch (parseError) {
       console.error('AI response parsing error:', parseError)
       // Fallback to basic HTML generation
-      htmlContent = generateFallbackHTML(profile, projects, template)
+      htmlContent = generateFallbackHTML(profile, projects || [], template)
       cssStyles = generateFallbackCSS(template)
       metadata = {
         title: `Portfolio - ${profile.full_name || 'Your Name'}`,

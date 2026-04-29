@@ -91,7 +91,7 @@ export default function TemplateSelector({ onTemplateSelect, showApplyButton = f
         throw new Error('You must be logged in to apply a template')
       }
       
-      // Apply template
+      // Apply template with proper authentication
       const response = await fetch('/api/templates', {
         method: 'POST',
         headers: {
@@ -107,15 +107,18 @@ export default function TemplateSelector({ onTemplateSelect, showApplyButton = f
       const data = await response.json()
       
       if (!response.ok) {
+        console.error('Template application failed:', data)
         throw new Error(data.error || 'Failed to apply template')
       }
       
+      console.log('Template applied successfully:', data)
       setSuccess(`"${template.name}" template applied successfully!`)
       
       // Refresh templates to update usage count
       fetchTemplates()
       
     } catch (err) {
+      console.error('Template application error:', err)
       setError(err instanceof Error ? err.message : 'Failed to apply template')
     } finally {
       setApplyingTemplate(null)

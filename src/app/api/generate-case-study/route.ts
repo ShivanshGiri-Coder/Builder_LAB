@@ -25,12 +25,23 @@ export async function POST(request: Request) {
       )
     }
 
-    // Log environment variables (without exposing actual keys)
-    console.log('Environment check:', {
-      GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
-      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    })
+    // Check if Gemini API key is available
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not configured')
+      // Return fallback case study instead of error
+      const fallbackCaseStudy = `**${projectName}**
+
+**Problem Solved:** ${problemSolved}
+
+**Solution:** ${description}
+
+**Technologies Used:** ${techStack}
+
+This project demonstrates strong problem-solving skills and technical expertise in building practical solutions that address real-world challenges. The implementation showcases proficiency in modern development practices and a commitment to creating impactful solutions.`
+      
+      console.log('Returning fallback case study due to missing API key')
+      return NextResponse.json({ caseStudy: fallbackCaseStudy })
+    }
 
     console.log('Calling generateCaseStudy with:', {
       projectName,
@@ -55,19 +66,21 @@ export async function POST(request: Request) {
     console.error('Error type:', typeof error)
     console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-    console.error('Full error object:', JSON.stringify(error, null, 2))
     console.log('=== End Error Details ===')
     
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate case study',
-        details: error instanceof Error ? {
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        } : { message: 'Unknown error occurred' }
-      },
-      { status: 500 }
-    )
+    // Return fallback case study instead of error
+    const { projectName, description, techStack, problemSolved } = await request.json().catch(() => ({}))
+    const fallbackCaseStudy = `**${projectName || 'Project'}**
+
+**Problem Solved:** ${problemSolved || 'Addressed a specific challenge'}
+
+**Solution:** ${description || 'Developed an innovative solution'}
+
+**Technologies Used:** ${techStack || 'Modern web technologies'}
+
+This project demonstrates strong problem-solving skills and technical expertise in building practical solutions that address real-world challenges. The implementation showcases proficiency in modern development practices and a commitment to creating impactful solutions.`
+    
+    console.log('Returning fallback case study due to error')
+    return NextResponse.json({ caseStudy: fallbackCaseStudy })
   }
 }
