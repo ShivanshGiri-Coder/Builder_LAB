@@ -155,7 +155,7 @@ function AuthForm() {
                 const { error } = await supabase.auth.signInWithOAuth({
                   provider: 'github',
                   options: {
-                    redirectTo: 'https://hrlewrmsjhctfslp.supabase.co/auth/v1/callback'
+                    redirectTo: `${window.location.origin}/api/auth/callback`
                   }
                 })
                 
@@ -187,7 +187,7 @@ function AuthForm() {
                 const { error } = await supabase.auth.signInWithOAuth({
                   provider: 'google',
                   options: {
-                    redirectTo: 'https://hrlewrmsjhctfslp.supabase.co/auth/v1/callback'
+                    redirectTo: `${window.location.origin}/api/auth/callback`
                   }
                 })
                 
