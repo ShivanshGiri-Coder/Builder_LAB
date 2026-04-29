@@ -1,8 +1,5 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { Metadata } from "next"
+import { createClient } from "@supabase/supabase-js"
 
 interface Project {
   id: number
@@ -28,54 +25,161 @@ interface Profile {
   created_at: string
 }
 
-export default function PortfolioPage() {
-  const params = useParams()
-  const username = params.username as string
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState("")
-  const supabase = createClient()
+interface PortfolioData {
+  profile: Profile
+  projects: Project[]
+}
 
-  useEffect(() => {
-    if (username) {
-      fetchPortfolio()
-    }
-  }, [username])
-
-  const fetchPortfolio = async () => {
-    try {
-      setIsLoading(true)
-      setError("")
-
-      const response = await fetch(`/api/portfolio/${username}`)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch portfolio')
-      }
-
-      setProfile(data.profile)
-      setProjects(data.projects || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch portfolio')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading portfolio...</p>
-        </div>
-      </div>
+async function getPortfolioData(username: string): Promise<PortfolioData | null> {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .single()
+
+    if (profileError || !profile) {
+      return null
+    }
+
+    const { data: projects, error: projectsError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', profile.user_id)
+      .order('created_at', { ascending: false })
+
+    if (projectsError) {
+      console.error('Projects fetch error:', projectsError)
+    }
+
+    return {
+      profile,
+      projects: projects || []
+    }
+  } catch (error) {
+    console.error('Portfolio fetch error:', error)
+    return null
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>
+}): Promise<Metadata> {
+  const { username } = await params
+  const data = await getPortfolioData(username)
+
+  if (!data || !data.profile) {
+    return {
+      title: 'Portfolio Not Found | Builder LAB',
+      description: 'This portfolio doesn\'t exist or has been removed.',
+    }
   }
 
-  if (error || !profile) {
+  const { profile, projects } = data
+  const title = `${profile.full_name || profile.username} - Portfolio | Builder LAB`
+  const description = profile.bio || `Check out ${profile.full_name || profile.username}'s portfolio with ${projects.length} amazing projects.`
+  
+  return {
+    title,
+    description,
+    keywords: [
+      'portfolio',
+      'developer',
+      'projects',
+      'coding',
+      'programming',
+      ...(profile.skills || []),
+      ...(projects?.flatMap(p => p.tech_used?.split(',').map(t => t.trim()) || []) || [])
+    ].filter(Boolean).slice(0, 10),
+    authors: [{ name: profile.full_name || profile.username }],
+    openGraph: {
+      title,
+      description,
+      type: 'profile',
+      url: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/p/${username}`,
+      siteName: 'Builder LAB',
+      images: [
+        {
+          url: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/api/og/${username}`,
+          width: 1200,
+          height: 630,
+          alt: `${profile.full_name || profile.username}'s Portfolio`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      creator: profile.twitter_url?.split('twitter.com/')[1] || '@builderlab',
+      images: [`${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/api/og/${username}`],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/p/${username}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+  }
+}
+
+// JSON-LD structured data component
+function StructuredData({ profile, projects }: { profile: Profile; projects: Project[] }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: profile.full_name || profile.username,
+    description: profile.bio,
+    url: `${process.env.NEXT_PUBLIC_URL || 'https://builder-lab.vercel.app'}/p/${profile.username}`,
+    sameAs: [
+      profile.github_url,
+      profile.linkedin_url,
+      profile.twitter_url,
+    ].filter(Boolean),
+    knowsAbout: profile.skills || [],
+    makes: projects.map(project => ({
+      '@type': 'CreativeWork',
+      name: project.project_name,
+      description: project.what_built,
+      url: project.demo_link,
+      sameAs: project.github_link,
+      dateCreated: project.created_at,
+      keywords: project.tech_used?.split(',').map(t => t.trim()),
+    })),
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  )
+}
+
+export default async function PortfolioPage({
+  params,
+}: {
+  params: Promise<{ username: string }>
+}) {
+  const { username } = await params
+  const data = await getPortfolioData(username)
+
+  if (!data || !data.profile) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -85,7 +189,7 @@ export default function PortfolioPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Portfolio Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || "This portfolio doesn't exist or has been removed."}</p>
+          <p className="text-gray-400 mb-6">This portfolio doesn't exist or has been removed.</p>
           <a
             href="/"
             className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
@@ -97,8 +201,12 @@ export default function PortfolioPage() {
     )
   }
 
+  const { profile, projects } = data
+
   return (
-    <div className="min-h-screen bg-gray-950">
+    <>
+      <StructuredData profile={profile} projects={projects} />
+      <div className="min-h-screen bg-gray-950">
       {/* Header */}
       <div className="border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -259,6 +367,7 @@ export default function PortfolioPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
